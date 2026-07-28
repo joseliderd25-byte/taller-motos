@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mi Taller Motos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #141419;
+  --surface-light: #1c1c24;
+  --surface-hover: #24242e;
+  --border: #2a2a35;
+  --border-light: #3a3a48;
+  --text: #ffffff;
+  --text-secondary: #a0a0b0;
+  --text-muted: #6b6b7b;
+  --primary: #f97316;
+  --primary-light: #fb923c;
+  --primary-dark: #ea580c;
+  --success: #22c55e;
+  --success-bg: rgba(34,197,94,0.12);
+  --danger: #ef4444;
+  --danger-bg: rgba(239,68,68,0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245,158,11,0.12);
+  --info: #3b82f6;
+  --info-bg: rgba(59,130,246,0.12);
+  --purple: #a855f7;
+  --purple-bg: rgba(168,85,247,0.12);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh; overflow-x: hidden; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+
+.hidden { display: none !important; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* TOASTS */
+#toastContainer { position: fixed; top: 16px; right: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 12px 16px; font-size: 13px; font-weight: 500; max-width: 320px;
+  box-shadow: var(--shadow-lg); transform: translateX(120%); transition: transform 0.3s ease;
+  pointer-events: auto; display: flex; align-items: center; gap: 10px;
+}
+.toast.show { transform: translateX(0); }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+.toast.warning { border-color: var(--warning); color: var(--warning); }
+.toast.info { border-color: var(--info); color: var(--info); }
+.toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; margin-left: auto; padding: 2px; }
+
+/* CONFIRM DIALOG */
+.confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+.confirm-overlay.open { display: flex; }
+.confirm-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 340px; text-align: center; }
+.confirm-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.confirm-msg { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-btn { flex: 1; padding: 10px; border-radius: var(--radius-sm); border: none; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+.confirm-btn.primary { background: var(--danger); color: #fff; }
+.confirm-btn.secondary { background: var(--surface-light); color: var(--text-secondary); border: 1px solid var(--border-light); }
+
+/* SPINNER */
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SCREENS */
+.screen-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: none; align-items: center; justify-content: center; padding: 24px; }
+.screen-overlay.open { display: flex; }
+.screen-box { background: var(--surface); border-radius: var(--radius-xl); padding: 32px 24px; width: 100%; max-width: 380px; text-align: center; border: 1px solid var(--border); }
+.screen-icon { font-size: 48px; margin-bottom: 12px; }
+.screen-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.screen-msg { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+.screen-info { background: var(--bg); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; text-align: left; }
+.screen-info-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.screen-info-row { font-size: 13px; color: var(--text-secondary); line-height: 2; }
+.btn-wa { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #25D366; color: #fff; border: none; border-radius: var(--radius-md); padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; margin-bottom: 10px; transition: opacity 0.2s; }
+.btn-wa:hover { opacity: 0.9; }
+.btn-wa:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+.btn-ghost { width: 100%; background: none; border: 1px solid var(--border-light); color: var(--text-muted); border-radius: var(--radius-md); padding: 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
+
+/* LOGIN */
+.login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 32px 24px; width: 100%; max-width: 360px; }
+.login-logo { font-size: 48px; text-align: center; margin-bottom: 10px; }
+.login-title { font-size: 20px; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 4px; }
+.login-sub { font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 24px; }
+.login-tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 3px; margin-bottom: 20px; }
+.login-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; color: var(--text-muted); border: none; background: none; font-family: inherit; transition: all 0.2s; }
+.login-tab.active { background: var(--surface); color: var(--primary); }
+.field-group { margin-bottom: 14px; text-align: left; }
+.field-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 5px; font-weight: 600; }
+.field-group input, .field-group select, .field-group textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+  color: var(--text); padding: 10px 12px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: var(--primary); }
+.field-group textarea { resize: vertical; min-height: 70px; }
+.btn-login { width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-login:hover { background: var(--primary-light); }
+.btn-login:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+.login-msg { font-size: 12px; margin-top: 10px; text-align: center; min-height: 18px; }
+.login-msg.error { color: var(--danger); }
+.login-msg.ok { color: var(--success); }
+.btn-link { background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; font-family: inherit; text-decoration: underline; }
+
+/* APP LAYOUT */
+#appRoot { display: none; min-height: 100vh; flex-direction: column; padding-bottom: 80px; }
+#appRoot.active { display: flex; }
+
+/* HEADER */
+.app-header {
+  padding: 16px 20px 8px; display: flex; align-items: center; justify-content: space-between;
+}
+.app-header-left { display: flex; align-items: center; gap: 12px; }
+.menu-btn { background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; padding: 4px; }
+.app-logo { display: flex; align-items: center; gap: 8px; }
+.app-logo-icon { font-size: 28px; }
+.app-logo-text { font-size: 15px; font-weight: 800; line-height: 1.2; }
+.app-logo-text span { color: var(--primary); }
+.app-header-right { display: flex; align-items: center; gap: 12px; }
+.notif-btn { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: var(--text); }
+.notif-badge { position: absolute; top: -2px; right: -2px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; }
+
+/* SALUDO */
+.greeting-section { padding: 8px 20px 16px; }
+.greeting-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.greeting-text { font-size: 22px; font-weight: 800; line-height: 1.3; }
+.greeting-text .wave { font-size: 24px; }
+.greeting-date { font-size: 13px; color: var(--text-secondary); }
+.weather-info { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); }
+.weather-info .temp { font-size: 18px; font-weight: 700; color: var(--text); }
+
+/* CONTENT */
+.content { padding: 0 16px; max-width: 720px; margin: 0 auto; width: 100%; flex: 1; }
+.section { display: none; animation: fadeIn 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* CARD PRINCIPAL INGRESOS */
+.income-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 16px; position: relative; overflow: hidden; cursor: pointer;
+}
+.income-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
+  background: rgba(255,255,255,0.08); border-radius: 50%;
+}
+.income-icon-wrap {
+  width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+.income-info { flex: 1; }
+.income-label { font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+.income-amount { font-size: 32px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+.income-sub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.income-detail {
+  display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15);
+  border: none; border-radius: var(--radius-sm); padding: 8px 14px; color: #fff;
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+.income-detail:hover { background: rgba(255,255,255,0.25); }
+
+/* GRID METODOS DE PAGO */
+.methods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.method-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 14px; transition: all 0.2s;
+}
+.method-card:hover { border-color: var(--border-light); }
+.method-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.method-icon-wrap {
+  width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.method-icon-wrap.cash { background: var(--success-bg); }
+.method-icon-wrap.qr { background: var(--purple-bg); }
+.method-icon-wrap.transfer { background: var(--info-bg); }
+.method-icon-wrap.card { background: var(--warning-bg); }
+.method-name { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+.method-amount { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.method-amount.cash { color: var(--success); }
+.method-amount.qr { color: var(--purple); }
+.method-amount.transfer { color: var(--info); }
+.method-amount.card { color: var(--warning); }
+.method-bar-track { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.method-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+.method-bar-fill.cash { background: var(--success); }
+.method-bar-fill.qr { background: var(--purple); }
+.method-bar-fill.transfer { background: var(--info); }
+.method-bar-fill.card { background: var(--warning); }
+.method-stats { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
+
+/* RESUMEN CARDS */
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.summary-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 14px; display: flex; align-items: flex-start; gap: 10px; position: relative; overflow: hidden;
+  cursor: pointer; transition: all 0.2s;
+}
+.summary-card:hover { border-color: var(--border-light); transform: translateY(-1px); }
+.summary-card-bg {
+  position: absolute; right: -10px; bottom: -10px; font-size: 60px; opacity: 0.03;
+  pointer-events: none;
+}
+.summary-icon-wrap {
+  width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.summary-icon-wrap.blue { background: var(--info-bg); }
+.summary-icon-wrap.orange { background: var(--warning-bg); }
+.summary-icon-wrap.pink { background: rgba(236,72,153,0.12); }
+.summary-icon-wrap.green { background: var(--success-bg); }
+.summary-info { flex: 1; min-width: 0; }
+.summary-title { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.summary-value { font-size: 24px; font-weight: 800; color: var(--text); }
+.summary-link { font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+/* CREDITOS BANNER */
+.credit-banner {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 16px; display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; cursor: pointer; transition: all 0.2s;
+}
+.credit-banner:hover { border-color: var(--warning); }
+.credit-banner-left { display: flex; align-items: center; gap: 12px; }
+.credit-banner-icon { font-size: 28px; }
+.credit-banner-info {}
+.credit-banner-title { font-size: 13px; color: var(--text-secondary); }
+.credit-banner-amount { font-size: 20px; font-weight: 800; color: var(--warning); }
+.credit-banner-right { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+/* ACTIVIDAD RECIENTE */
+.activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.activity-title { font-size: 16px; font-weight: 700; }
+.activity-link { font-size: 13px; color: var(--primary); font-weight: 600; cursor: pointer; background: none; border: none; font-family: inherit; }
+.activity-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.activity-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.2s;
+}
+.activity-item:hover { border-color: var(--border-light); }
+.activity-icon-wrap {
+  width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.activity-icon-wrap.green { background: var(--success-bg); }
+.activity-icon-wrap.purple { background: var(--purple-bg); }
+.activity-icon-wrap.blue { background: var(--info-bg); }
+.activity-icon-wrap.orange { background: var(--warning-bg); }
+.activity-info { flex: 1; min-width: 0; }
+.activity-title-item { font-size: 13px; font-weight: 600; color: var(--text); }
+.activity-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.activity-right { text-align: right; }
+.activity-time { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.activity-amount { font-size: 14px; font-weight: 700; }
+.activity-amount.green { color: var(--success); }
+.activity-amount.purple { color: var(--purple); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
+  border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+  padding: 8px 0 12px; z-index: 100; backdrop-filter: blur(10px);
+}
+.bottom-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; color: var(--text-muted); font-size: 10px;
+  font-family: inherit; cursor: pointer; padding: 4px 12px; transition: all 0.2s; font-weight: 500;
+}
+.bottom-nav-item .nav-icon { font-size: 22px; transition: all 0.2s; }
+.bottom-nav-item.active { color: var(--primary); }
+.bottom-nav-item.active .nav-icon { transform: translateY(-2px); }
+
+/* SECTIONS ESTANDAR */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 8px; }
+.section-title { font-size: 18px; font-weight: 700; }
+.section-sub { font-size: 12px; color: var(--text-muted); }
+.btn-action { display: inline-flex; align-items: center; gap: 6px; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 13px; font-family: inherit; transition: all 0.2s; }
+.btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* LISTAS */
+.list-card { background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
+.list-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
+.list-item:last-child { border-bottom: none; }
+.list-item-info { flex: 1; min-width: 0; }
+.list-item-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.list-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.list-item-val { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.list-item-del { background: none; border: none; cursor: pointer; color: #374151; padding: 4px; font-size: 15px; transition: color 0.2s; }
+.list-item-del:hover { color: var(--danger); }
+.empty { padding: 32px 0; text-align: center; color: var(--text-muted); font-size: 13px; }
+.total-bar { margin-top: 10px; border-radius: var(--radius-md); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
+
+/* MOTOS / REPARACIONES */
+.moto-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 10px; }
+.estado-pill { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; cursor: pointer; border: none; font-family: inherit; transition: opacity 0.2s; }
+.estado-pill:hover { opacity: 0.8; }
+.estado-dropdown { position: absolute; top: 110%; left: 0; background: var(--surface-light); border: 1px solid var(--border-light); border-radius: 10px; z-index: 50; min-width: 170px; overflow: hidden; box-shadow: var(--shadow-lg); display: none; }
+.estado-dropdown.open { display: block; animation: fadeIn 0.15s ease; }
+.estado-opt { display: block; width: 100%; text-align: left; background: none; border: none; padding: 9px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text); transition: background 0.15s; }
+.estado-opt:hover { background: var(--border-light); }
+.fotos-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.foto-thumb { width: 52px; height: 52px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border-light); cursor: pointer; transition: transform 0.15s; }
+.foto-thumb:hover { transform: scale(1.05); }
+.foto-thumb-count { width: 52px; height: 52px; border-radius: var(--radius-sm); background: var(--border); border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-secondary); font-weight: 700; cursor: pointer; }
+
+/* CREDITOS */
+.cred-persona-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px; }
+.cred-persona-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.persona-avatar { background: var(--warning-bg); border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.cred-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cred-item:last-of-type { border-bottom: none; }
+.btn-cobrar { width: 100%; font-size: 12px; background: var(--warning-bg); border: 1px solid rgba(245,158,11,0.3); color: var(--warning); border-radius: 7px; padding: 7px 12px; cursor: pointer; font-weight: 600; font-family: inherit; display: block; margin-top: 6px; transition: all 0.2s; }
+.btn-cobrar:hover { background: rgba(245,158,11,0.2); }
+.confirm-row { display: flex; gap: 8px; margin-top: 6px; }
+.btn-si { flex: 1; background: var(--success); border: none; color: #fff; border-radius: 7px; padding: 7px 0; font-weight: 700; font-size: 12px; cursor: pointer; font-family: inherit; }
+.btn-no { flex: 1; background: var(--surface-light); border: 1px solid var(--border-light); color: var(--text-secondary); border-radius: 7px; padding: 7px 0; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; }
+.empty-cred { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 20px; text-align: center; }
+.gasto-cat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-left: 4px; margin-top: 14px; }
+
+/* MODALES */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: flex-end; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0; width: 100%; padding: 20px 20px 32px; border: 1px solid var(--border); border-bottom: none; max-height: 92vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-title { font-size: 17px; font-weight: 700; }
+.modal-close { background: var(--surface-light); border: none; color: var(--text-secondary); border-radius: var(--radius-sm); width: 32px; height: 32px; cursor: pointer; font-size: 16px; font-family: inherit; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--border-light); color: var(--text); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pago-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pago-btn { border-radius: var(--radius-sm); padding: 10px 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; border: 2px solid var(--border); background: var(--bg); color: var(--text-muted); font-weight: 400; transition: all 0.15s; }
+.pago-btn.selected { font-weight: 700; }
+.btn-save { width: 100%; color: #fff; border: none; border-radius: 12px; padding: 13px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
+.btn-save:hover { opacity: 0.9; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ITEMS VENTA */
+.item-venta-row { background: var(--bg); border: 1px solid var(--border-light); border-radius: 10px; padding: 12px; margin-bottom: 10px; position: relative; }
+.item-venta-row .item-del { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px; }
+.item-venta-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 8px; }
+.item-venta-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.item-venta-row input, .item-venta-row select { width: 100%; background: var(--surface); border: 1px solid var(--border-light); border-radius: 7px; color: var(--text); padding: 7px 9px; font-size: 13px; outline: none; font-family: inherit; }
+.item-venta-subtotal { font-size: 11px; color: var(--text-muted); margin-top: 6px; text-align: right; }
+.item-venta-subtotal b { color: var(--success); }
+
+/* FOTOS */
+.foto-add-area { border: 2px dashed var(--border-light); border-radius: var(--radius-md); padding: 16px; text-align: center; cursor: pointer; position: relative; transition: all 0.2s; }
+.foto-add-area:hover { border-color: var(--primary); }
+.foto-add-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.fotos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.foto-grid-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-light); }
+.foto-grid-img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+.foto-grid-del { position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.85); border: none; color: #fff; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+
+/* HOJA / PDF */
+.hoja-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+.hoja-overlay.open { display: flex; }
+.hoja-box { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); max-width: 440px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 0; }
+.hoja-header-bar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 20px 20px 16px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; display: flex; justify-content: space-between; align-items: flex-start; }
+.hoja-close { background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: var(--radius-sm); width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.hoja-body { padding: 20px; }
+.hoja-section { margin-bottom: 16px; }
+.hoja-section-title { font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.hoja-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+.hoja-key { color: var(--text-muted); }
+.hoja-val { font-weight: 600; color: var(--text); text-align: right; max-width: 60%; }
+.hoja-estado-recep { background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+.hoja-fotos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.hoja-foto-img { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-light); aspect-ratio: 4/3; object-fit: cover; }
+.hoja-footer { padding: 14px 20px 20px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.wa-pdf-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #25D366; color: #fff; border: none; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+.wa-pdf-btn:hover { opacity: 0.9; }
+.wa-pdf-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+.wa-text-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--surface-light); border: 1px solid var(--border-light); color: var(--text-secondary); border-radius: 10px; padding: 10px; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+.generating-bar { background: var(--surface-light); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--text-muted); text-align: center; display: none; }
+
+/* LIGHTBOX */
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 100%; max-height: 85vh; border-radius: var(--radius-md); border: 2px solid var(--primary); }
+
+/* BADGES */
+.badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 6px; display: inline-block; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+/* RESPONSIVE */
+@media (max-width: 380px) {
+  .methods-grid { gap: 8px; }
+  .method-card { padding: 10px; }
+  .summary-grid { gap: 8px; }
+  .summary-card { padding: 10px; }
+  .income-amount { font-size: 26px; }
+  .greeting-text { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOASTS -->
+<div id="toastContainer"></div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmDialog">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">Confirmar</div>
+    <div class="confirm-msg" id="confirmMsg">Esta accion no se puede deshacer.</div>
+    <div class="confirm-actions">
+      <button class="confirm-btn secondary" id="confirmCancel">Cancelar</button>
+      <button class="confirm-btn primary" id="confirmOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUENTA EN REVISION -->
+<div class="screen-overlay" id="pendingScreen">
+  <div class="screen-box" style="border-color:#3b82f6">
+    <div class="screen-icon">&#9203;</div>
+    <div class="screen-title" style="color:#3b82f6">Cuenta en revision</div>
+    <div class="screen-msg">
+      Tu cuenta fue creada exitosamente. Para activar tu <b style="color:var(--text)">periodo de prueba gratuito de 30 dias</b>, escribenos por WhatsApp y te activamos en minutos.
+    </div>
+    <div class="screen-info">
+      <div class="screen-info-title">Que incluye la prueba</div>
+      <div class="screen-info-row">&#9989; 30 dias completamente gratis</div>
+      <div class="screen-info-row">&#9989; Acceso a todas las funciones</div>
+      <div class="screen-info-row">&#9989; Datos guardados en la nube</div>
+      <div class="screen-info-row">&#9989; Sin necesidad de tarjeta</div>
+    </div>
+    <button class="btn-wa" onclick="App.contactarWhatsAppActivacion()">
+      <span style="font-size:20px">&#128172;</span> Activar mi cuenta gratis
+    </button>
+    <button class="btn-ghost" onclick="App.logout()">Cerrar sesion</button>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:12px">Correo registrado: <span id="pendingEmail" style="color:var(--text-secondary)"></span></div>
+  </div>
+</div>
+
+<!-- PERIODO VENCIDO -->
+<div class="screen-overlay" id="trialScreen">
+  <div class="screen-box" style="border-color:var(--primary)">
+    <div class="screen-icon">&#9200;</div>
+    <div class="screen-title" style="color:var(--primary)">Periodo de prueba terminado</div>
+    <div class="screen-msg">
+      Tu periodo de prueba gratuito de 30 dias ha terminado. Para continuar usando <b style="color:var(--primary)">Mi Taller Motos</b> y mantener todos tus datos, activa tu suscripcion.
+    </div>
+    <div class="screen-msg" style="margin-bottom:16px" id="trialDiasMsg"></div>
+    <div class="screen-info">
+      <div class="screen-info-title">Planes disponibles</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:14px;color:var(--text)">&#128197; Mensual</span>
+        <span style="font-size:16px;font-weight:800;color:var(--primary)">Bs. 50/mes</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;color:var(--text)">&#128198; Anual <span style="font-size:10px;color:var(--success)">Ahorra 2 meses</span></span>
+        <span style="font-size:16px;font-weight:800;color:var(--success)">Bs. 500/anio</span>
+      </div>
+    </div>
+    <button class="btn-wa" onclick="App.contactarWhatsApp()">
+      <span style="font-size:20px">&#128172;</span> Activar por WhatsApp
+    </button>
+    <button class="btn-ghost" onclick="App.logout()">Cerrar sesion</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">&#128295;</div>
+    <div class="login-title">Mi Taller Motos</div>
+    <div class="login-sub">Accede con tu correo para guardar tus datos en la nube</div>
+    <div class="login-tabs">
+      <button class="login-tab active" id="tabIngresar" onclick="App.switchLoginTab('ingresar')">Ingresar</button>
+      <button class="login-tab" id="tabRegistrar" onclick="App.switchLoginTab('registrar')">Crear cuenta</button>
+    </div>
+    <div class="field-group">
+      <label>Correo electronico</label>
+      <input type="email" id="loginEmail" placeholder="tucorreo@gmail.com" autocomplete="email">
+    </div>
+    <div class="field-group">
+      <label>Contrasena</label>
+      <input type="password" id="loginPassword" placeholder="Minimo 6 caracteres" autocomplete="current-password">
+    </div>
+    <div class="field-group hidden" id="confirmPasswordField">
+      <label>Confirmar contrasena</label>
+      <input type="password" id="loginConfirm" placeholder="Repite la contrasena">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="App.doLogin()">Ingresar</button>
+    <div class="login-msg" id="loginMsg"></div>
+    <div style="margin-top:16px;text-align:center">
+      <button class="btn-link" onclick="App.doResetPassword()">Olvide mi contrasena</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appRoot">
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-header-left">
+    <button class="menu-btn" onclick="App.toggleMenu()">&#9776;</button>
+    <div class="app-logo">
+      <span class="app-logo-icon">&#127949;&#65039;</span>
+      <div class="app-logo-text">MI TALLER<br><span>MOTOS</span></div>
+    </div>
+  </div>
+  <div class="app-header-right">
+    <button class="notif-btn" onclick="App.showNotifications()">
+      &#128276;
+      <span class="notif-badge" id="notifCount" style="display:none">0</span>
+    </button>
+    <div class="avatar" id="userAvatar">U</div>
+  </div>
+</div>
+
+<!-- SALUDO -->
+<div class="greeting-section">
+  <div class="greeting-top">
+    <div>
+      <div class="greeting-text" id="greetingText">Buenas noches! <span class="wave">&#128075;</span></div>
+      <div class="greeting-date" id="greetingDate"></div>
+    </div>
+    <div class="weather-info" id="weatherInfo">
+      <span>&#127769;</span>
+      <span class="temp">--</span>
+      <span>Santa Cruz</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- RESUMEN -->
+  <div id="sec-resumen" class="section active">
+    <div class="income-card" onclick="App.setTab('ventas',null)">
+      <div class="income-icon-wrap">&#128200;</div>
+      <div class="income-info">
+        <div class="income-label">Ingresos de hoy</div>
+        <div class="income-amount" id="incomeAmount">Bs 0,00</div>
+        <div class="income-sub" id="incomeSub">Total de entradas</div>
+      </div>
+      <button class="income-detail" onclick="event.stopPropagation();App.setTab('ventas',null)">
+        &#128202; Ver detalle
+      </button>
+    </div>
+
+    <div class="methods-grid" id="methodsGrid">
+      <div class="method-card">
+        <div class="method-card-header">
+          <div class="method-icon-wrap cash">&#128181;</div>
+          <span class="method-name">Efectivo</span>
+        </div>
+        <div class="method-amount cash" id="methodCash">Bs 0,00</div>
+        <div class="method-bar-track"><div class="method-bar-fill cash" id="barCash" style="width:0%"></div></div>
+        <div class="method-stats"><span id="pctCash">0%</span><span id="countCash">0</span></div>
+      </div>
+      <div class="method-card">
+        <div class="method-card-header">
+          <div class="method-icon-wrap qr">&#128242;</div>
+          <span class="method-name">QR</span>
+        </div>
+        <div class="method-amount qr" id="methodQR">Bs 0,00</div>
+        <div class="method-bar-track"><div class="method-bar-fill qr" id="barQR" style="width:0%"></div></div>
+        <div class="method-stats"><span id="pctQR">0%</span><span id="countQR">0</span></div>
+      </div>
+      <div class="method-card">
+        <div class="method-card-header">
+          <div class="method-icon-wrap transfer">&#127974;</div>
+          <span class="method-name">Transferencia</span>
+        </div>
+        <div class="method-amount transfer" id="methodTransfer">Bs 0,00</div>
+        <div class="method-bar-track"><div class="method-bar-fill transfer" id="barTransfer" style="width:0%"></div></div>
+        <div class="method-stats"><span id="pctTransfer">0%</span><span id="countTransfer">0</span></div>
+      </div>
+      <div class="method-card">
+        <div class="method-card-header">
+          <div class="method-icon-wrap card">&#128179;</div>
+          <span class="method-name">Tarjeta</span>
+        </div>
+        <div class="method-amount card" id="methodCard">Bs 0,00</div>
+        <div class="method-bar-track"><div class="method-bar-fill card" id="barCard" style="width:0%"></div></div>
+        <div class="method-stats"><span id="pctCard">0%</span><span id="countCard">0</span></div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card" onclick="App.setTab('reparaciones',null)">
+        <div class="summary-card-bg">&#127949;&#65039;</div>
+        <div class="summary-icon-wrap blue">&#127949;&#65039;</div>
+        <div class="summary-info">
+          <div class="summary-title">Motos en taller</div>
+          <div class="summary-value" id="sumMotos">0</div>
+          <div class="summary-link">Ver todas &#8250;</div>
+        </div>
+      </div>
+      <div class="summary-card" onclick="App.setTab('reparaciones',null)">
+        <div class="summary-card-bg">&#128295;</div>
+        <div class="summary-icon-wrap orange">&#128295;</div>
+        <div class="summary-info">
+          <div class="summary-title">Reparaciones hoy</div>
+          <div class="summary-value" id="sumRepHoy">0</div>
+          <div class="summary-link">Ver todas &#8250;</div>
+        </div>
+      </div>
+      <div class="summary-card" onclick="App.setTab('ventas',null)">
+        <div class="summary-card-bg">&#128722;</div>
+        <div class="summary-icon-wrap pink">&#128722;</div>
+        <div class="summary-info">
+          <div class="summary-title">Ventas hoy</div>
+          <div class="summary-value" id="sumVentasHoy">0</div>
+          <div class="summary-link">Ver todas &#8250;</div>
+        </div>
+      </div>
+      <div class="summary-card" onclick="App.showToast('Inventario proximamente','info')">
+        <div class="summary-card-bg">&#9888;&#65039;</div>
+        <div class="summary-icon-wrap green">&#9888;&#65039;</div>
+        <div class="summary-info">
+          <div class="summary-title">Repuestos por agotarse</div>
+          <div class="summary-value" id="sumStock">0</div>
+          <div class="summary-link">Ver inventario &#8250;</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="credit-banner" id="creditBanner" onclick="App.setTab('creditos',null)" style="display:none">
+      <div class="credit-banner-left">
+        <span class="credit-banner-icon">&#128100;&#9200;</span>
+        <div class="credit-banner-info">
+          <div class="credit-banner-title">Creditos pendientes</div>
+          <div class="credit-banner-amount" id="creditBannerAmt">Bs 0,00</div>
+        </div>
+      </div>
+      <div class="credit-banner-right">Ver creditos &#8250;</div>
+    </div>
+
+    <div class="activity-header">
+      <div class="activity-title">Actividad reciente</div>
+      <button class="activity-link" onclick="App.setTab('ventas',null)">Ver todas</button>
+    </div>
+    <div class="activity-list" id="activityList">
+      <div class="empty">No hay actividad reciente</div>
+    </div>
+  </div>
+
+  <!-- VENTAS -->
+  <div id="sec-ventas" class="section">
+    <div class="section-header">
+      <div><div class="section-title">Ventas de productos</div><div class="section-sub">Aceites, repuestos y otros</div></div>
+      <button class="btn-action" style="background:var(--primary)" onclick="App.openModal('modalVenta')">+ Nueva venta</button>
+    </div>
+    <div class="list-card" id="listaVentas"><div class="empty">No hay ventas registradas</div></div>
+    <div id="totalVentas" style="display:none" class="total-bar"><span style="font-size:13px;color:var(--text-secondary)">Total ventas cobradas</span><span style="font-size:16px;font-weight:700;color:var(--success)" id="totalVentasVal"></span></div>
+  </div>
+
+  <!-- REPARACIONES -->
+  <div id="sec-reparaciones" class="section">
+    <div class="section-header">
+      <div><div class="section-title">Reparaciones</div><div class="section-sub" id="repSub">0 motos en el periodo</div></div>
+      <button class="btn-action" style="background:var(--info)" onclick="App.openModal('modalRep')">+ Registrar moto</button>
+    </div>
+    <div id="listaRep"></div>
+    <div id="totalRep" style="display:none" class="total-bar"><span style="font-size:13px;color:var(--text-secondary)">Total cobrado (sin creditos)</span><span style="font-size:16px;font-weight:700;color:var(--info)" id="totalRepVal"></span></div>
+  </div>
+
+  <!-- CREDITOS -->
+  <div id="sec-creditos" class="section">
+    <div class="section-header"><div><div class="section-title">Creditos pendientes</div><div class="section-sub">Clientes que aun deben pagar</div></div></div>
+    <div id="listaCreditos"></div>
+  </div>
+
+  <!-- GASTOS -->
+  <div id="sec-gastos" class="section">
+    <div class="section-header">
+      <div><div class="section-title">Gastos y pagos</div><div class="section-sub">Proveedores, salarios y otros</div></div>
+      <button class="btn-action" style="background:var(--danger)" onclick="App.openModal('modalGasto')">+ Registrar gasto</button>
+    </div>
+    <div id="listaGastos"></div>
+    <div id="totalGastos" style="display:none" class="total-bar"><span style="font-size:13px;color:var(--text-secondary)">Total gastos</span><span style="font-size:16px;font-weight:700;color:var(--danger)" id="totalGastosVal"></span></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bottom-nav-item active" data-tab="resumen" onclick="App.setTab('resumen',this)">
+    <span class="nav-icon">&#127968;</span>
+    <span>Inicio</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="reparaciones" onclick="App.setTab('reparaciones',this)">
+    <span class="nav-icon">&#127949;&#65039;</span>
+    <span>Reparaciones</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="ventas" onclick="App.setTab('ventas',this)">
+    <span class="nav-icon">&#128178;</span>
+    <span>Ventas</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="creditos" onclick="App.setTab('creditos',this)">
+    <span class="nav-icon">&#128203;</span>
+    <span>Creditos</span>
+  </button>
+  <button class="bottom-nav-item" onclick="App.showToast('Ajustes proximamente','info')">
+    <span class="nav-icon">&#9881;&#65039;</span>
+    <span>Ajustes</span>
+  </button>
+</div>
+
+<!-- MODAL VENTA -->
+<div class="modal-overlay" id="modalVenta" onclick="if(event.target===this)App.closeModal('modalVenta')">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Nuevo recibo de venta</span><button class="modal-close" onclick="App.closeModal('modalVenta')">&#10005;</button></div>
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Productos del recibo</div>
+    <div id="itemsVentaList"></div>
+    <button type="button" onclick="App.agregarItemVenta()" style="width:100%;background:var(--bg);border:1px dashed var(--border-light);color:var(--primary);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px">+ Anadir otro producto</button>
+    <div class="field-group"><label>Metodo de pago</label><div class="pago-grid" id="vPagoGrid"></div></div>
+    <div class="field-group hidden" id="vClienteField"><label>Nombre del cliente *</label><input id="vCliente" style="border-color:rgba(245,158,11,0.4)" placeholder="A quien se le fia?"></div>
+    <div class="field-group"><label>Fecha</label><input type="date" id="vFecha"></div>
+    <div style="background:var(--bg);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:13px;color:var(--text-secondary)">Total del recibo</span>
+      <span style="font-size:20px;font-weight:800;color:var(--success)" id="vTotalPreview">Bs 0,00</span>
+    </div>
+    <button class="btn-save" style="background:var(--success)" onclick="App.saveVenta()">Guardar venta</button>
+  </div>
+</div>
+
+<!-- MODAL REPARACION -->
+<div class="modal-overlay" id="modalRep" onclick="if(event.target===this)App.closeModal('modalRep')">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Registrar reparacion</span><button class="modal-close" onclick="App.closeModal('modalRep')">&#10005;</button></div>
+    <div style="background:var(--bg);border:1px solid var(--primary);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">&#128203; Recepcion de moto</div>
+      <div class="two-col">
+        <div class="field-group"><label>Placa</label><input id="rPlaca" placeholder="1234ABC" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field-group"><label>Marca / Modelo</label><input id="rModelo" placeholder="Yamaha FZ..."></div>
+      </div>
+      <div class="field-group"><label>Nombre del cliente</label><input id="rCliente" placeholder="Nombre completo"></div>
+      <div class="field-group"><label>WhatsApp del cliente</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:18px">&#128241;</span>
+          <input id="rWhatsapp" placeholder="+591 7XXXXXXX" type="tel" style="flex:1;background:var(--bg);border:1px solid var(--border-light);border-radius:8px;color:var(--text);padding:9px 12px;font-size:14px;outline:none;font-family:inherit">
+        </div>
+      </div>
+      <div class="field-group"><label>Estado en que se recibe la moto</label>
+        <textarea id="rEstadoRecep" placeholder="Ej: Raya en tanque lado derecho, espejo roto..."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Fotos de recepcion <span style="color:var(--text-muted);font-weight:400;font-size:10px">(hasta 4 angulos)</span></label>
+        <div id="fotosGrid" class="fotos-grid" style="display:none"></div>
+        <div class="two-col" id="fotoAddArea">
+          <div class="foto-add-area" onclick="document.getElementById('fotoInputCamera').click()" style="padding:14px">
+            <input type="file" id="fotoInputCamera" accept="image/*" capture="environment" onchange="App.handleFotos(this)">
+            <div style="font-size:24px;margin-bottom:4px">&#128247;</div>
+            <div style="font-size:12px;color:var(--text-muted)">Tomar foto</div>
+          </div>
+          <div class="foto-add-area" onclick="document.getElementById('fotoInputGaleria').click()" style="padding:14px">
+            <input type="file" id="fotoInputGaleria" accept="image/*" multiple onchange="App.handleFotos(this)">
+            <div style="font-size:24px;margin-bottom:4px">&#128444;&#65039;</div>
+            <div style="font-size:12px;color:var(--text-muted)">Elegir de galeria</div>
+          </div>
+        </div>
+        <div id="fotoLimitMsg" style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center"></div>
+        <div id="fotoProgress" style="font-size:11px;color:var(--primary);margin-top:6px;text-align:center;display:none">&#9203; Procesando fotos...</div>
+      </div>
+    </div>
+    <div class="field-group"><label>Trabajo a realizar</label><input id="rTrabajo" placeholder="Cambio de aceite, frenos..."></div>
+    <div class="field-group"><label>Mecanico encargado</label>
+      <input id="rMecanico" list="listaMecanicos" placeholder="Quien va a trabajar esta moto?">
+      <datalist id="listaMecanicos"></datalist>
+    </div>
+    <div class="field-group"><label>Cobro (Bs.)</label><input type="number" id="rCobro" placeholder="0.00"></div>
+    <div class="field-group"><label>Metodo de pago</label><div class="pago-grid" id="rPagoGrid"></div></div>
+    <div id="rCreditWarn" style="font-size:11px;color:var(--warning);margin-top:-8px;margin-bottom:10px;display:none">&#9888;&#65039; Recuerda escribir el nombre del cliente para llevar la deuda</div>
+    <div class="two-col">
+      <div class="field-group"><label>Estado</label>
+        <select id="rEstado"><option>En taller</option><option>En espera repuesto</option><option>Entregada</option></select>
+      </div>
+      <div class="field-group"><label>Fecha</label><input type="date" id="rFecha"></div>
+    </div>
+    <button class="btn-save" style="background:var(--info)" onclick="App.saveRep()">Guardar reparacion</button>
+  </div>
+</div>
+
+<!-- MODAL GASTO -->
+<div class="modal-overlay" id="modalGasto" onclick="if(event.target===this)App.closeModal('modalGasto')">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Registrar gasto / pago</span><button class="modal-close" onclick="App.closeModal('modalGasto')">&#10005;</button></div>
+    <div class="field-group"><label>Descripcion</label><input id="gDesc" placeholder="Pago a proveedor, salario Juan..."></div>
+    <div class="field-group"><label>Categoria</label>
+      <select id="gCat"><option>Proveedor</option><option>Salario/trabajador</option><option>Arriendo</option><option>Herramientas</option><option>Otro</option></select>
+    </div>
+    <div class="two-col">
+      <div class="field-group"><label>Monto (Bs.)</label><input type="number" id="gMonto" placeholder="0.00"></div>
+      <div class="field-group"><label>Fecha</label><input type="date" id="gFecha"></div>
+    </div>
+    <button class="btn-save" style="background:var(--danger)" onclick="App.saveGasto()">Registrar gasto</button>
+  </div>
+</div>
+
+<!-- HOJA MODAL -->
+<div class="hoja-overlay" id="hojaModal" onclick="if(event.target===this)App.closeHoja()">
+  <div class="hoja-box">
+    <div class="hoja-header-bar">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#fff">&#128295; Hoja de Recepcion</div>
+        <div style="font-size:11px;color:#fff9;margin-top:2px" id="hojaSub">Mi Taller Motos</div>
+      </div>
+      <button class="hoja-close" onclick="App.closeHoja()">&#10005;</button>
+    </div>
+    <div class="hoja-body" id="hojaBody"></div>
+    <div class="hoja-footer">
+      <div class="generating-bar" id="generatingBar">&#9203; Generando PDF...</div>
+      <button class="wa-pdf-btn" id="waPdfBtn" onclick="App.generarYEnviarPDF()"><span style="font-size:18px">&#128172;</span> Enviar PDF por WhatsApp</button>
+      <button class="wa-text-btn" onclick="App.enviarWATexto()">&#128172; Enviar solo texto por WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('open')">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+</div><!-- /appRoot -->
+
+<!-- FIREBASE + APP LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendPasswordResetEmail, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const fbApp = initializeApp({
+  apiKey: "AIzaSyD_7G0dCTpLz80-grdeTK6_t9T0r2QQqAQ",
+  authDomain: "tallerdemotos-d09da.firebaseapp.com",
+  projectId: "tallerdemotos-d09da",
+  storageBucket: "tallerdemotos-d09da.firebasestorage.app",
+  messagingSenderId: "711118487191",
+  appId: "1:711118487191:web:22b5180061b3a84e88b3d2"
+});
+
+const auth = getAuth(fbApp);
+const db   = getFirestore(fbApp);
+
+window._fb = { auth, db, doc, getDoc, setDoc, signOut,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendPasswordResetEmail };
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    window._uid = user.uid;
+    window._email = user.email;
+    document.getElementById('loginScreen').classList.add('hidden');
+    App.setSyncBadge('syncing');
+
+    const snap = await getDoc(doc(db, 'talleres', user.uid));
+    let datos = snap.exists() ? snap.data() : {};
+
+    if (!datos.fechaRegistro) {
+      datos.fechaRegistro = new Date().toISOString();
+      datos.activo = false;
+      datos.email = user.email;
+      setDoc(doc(db, 'talleres', user.uid), datos, { merge: true });
+    }
+
+    const cuentaActiva = datos.activo === true;
+    const esAdmin = user.email === "joseliderd25@gmail.com";
+
+    if (esAdmin) {
+      App.ventas = datos.ventas || [];
+      App.reparaciones = datos.reparaciones || [];
+      App.gastos = datos.gastos || [];
+      document.getElementById('trialScreen').classList.remove('open');
+      document.getElementById('pendingScreen').classList.remove('open');
+      document.getElementById('appRoot').classList.add('active');
+      App.setSyncBadge('ok');
+      App.initApp();
+      return;
+    }
+
+    if (!cuentaActiva && !esAdmin) {
+      document.getElementById('pendingEmail').textContent = user.email;
+      document.getElementById('pendingScreen').classList.add('open');
+      App.setSyncBadge('ok');
+      return;
+    }
+
+    let fechaVence;
+    if (datos.fechaVencimiento) {
+      fechaVence = new Date(datos.fechaVencimiento);
+    } else {
+      fechaVence = new Date(datos.fechaRegistro);
+      fechaVence.setDate(fechaVence.getDate() + 30);
+    }
+    const diasRestantes = Math.ceil((fechaVence - new Date()) / 86400000);
+
+    if (diasRestantes <= 0) {
+      const msg = document.getElementById('trialDiasMsg');
+      if (msg) msg.innerHTML = 'Tu prueba vencio hace <b>' + Math.abs(diasRestantes) + ' dia' + (Math.abs(diasRestantes) !== 1 ? 's' : '') + '</b>. Tus datos estan guardados y seguros.';
+      document.getElementById('trialScreen').classList.add('open');
+      App.setSyncBadge('ok');
+      return;
+    }
+
+    App.ventas = datos.ventas || [];
+    App.reparaciones = datos.reparaciones || [];
+    App.gastos = datos.gastos || [];
+
+    document.getElementById('trialScreen').classList.remove('open');
+    document.getElementById('pendingScreen').classList.remove('open');
+    document.getElementById('appRoot').classList.add('active');
+    App.setSyncBadge('ok');
+    App.initApp();
+
+  } else {
+    window._uid = null;
+    document.getElementById('pendingScreen').classList.remove('open');
+    document.getElementById('trialScreen').classList.remove('open');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('appRoot').classList.remove('active');
+  }
+});
+</script>
+
+<script>
+// ============================================================
+// APP NAMESPACE
+// ============================================================
+const App = {
+  ventas: [],
+  reparaciones: [],
+  gastos: [],
+  periodo: 'mes',
+  activeTab: 'resumen',
+  fotosActuales: [],
+  hojaActual: null,
+  vPago: 'Efectivo',
+  rPago: 'Efectivo',
+  itemsVenta: [],
+  itemIdSeq: 1,
+  loginMode: 'ingresar',
+  _saveTimer: null,
+
+  // ── CONSTANTES ──
+  PAGO_COLOR: { Efectivo: '#22c55e', QR: '#a855f7', Transferencia: '#3b82f6', 'Credito': '#f59e0b', Tarjeta: '#f59e0b' },
+  PAGO_EMOJI: { Efectivo: '💵', QR: '📲', Transferencia: '🏦', 'Credito': '📋', Tarjeta: '💳' },
+  ESTADO_COLOR: { 'En taller': '#f59e0b', 'En espera repuesto': '#ef4444', Entregada: '#22c55e' },
+  ESTADO_EMOJI: { 'En taller': '🔧', 'En espera repuesto': '⏳', Entregada: '✅' },
+  METODOS: ['Efectivo', 'QR', 'Transferencia', 'Credito'],
+
+  // ── UTILIDADES ──
+  fmt(n) {
+    return 'Bs ' + Number(n || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  },
+  todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  },
+  getMonto(x) {
+    return Number(x.total || x.cobro || 0);
+  },
+  esc(s) {
+    const d = document.createElement('div');
+    d.textContent = String(s || '');
+    return d.innerHTML;
+  },
+  descripcionVenta(v) {
+    const items = v.items && v.items.length ? v.items : [{ producto: v.producto }];
+    if (items.length === 1) return items[0].producto;
+    return items[0].producto + ' +' + (items.length - 1) + ' mas';
+  },
+
+  // ── TOASTS ──
+  showToast(msg, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${this.esc(msg)}</span><button class="toast-close" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  },
+
+  // ── CONFIRM DIALOG ──
+  confirm(title, msg) {
+    return new Promise(resolve => {
+      const overlay = document.getElementById('confirmDialog');
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMsg').textContent = msg;
+      overlay.classList.add('open');
+      const ok = document.getElementById('confirmOk');
+      const cancel = document.getElementById('confirmCancel');
+      const cleanup = () => {
+        overlay.classList.remove('open');
+        ok.onclick = null;
+        cancel.onclick = null;
+      };
+      ok.onclick = () => { cleanup(); resolve(true); };
+      cancel.onclick = () => { cleanup(); resolve(false); };
+    });
+  },
+
+  // ── SYNC BADGE ──
+  setSyncBadge(state) {
+    const el = document.getElementById('syncBadge');
+    if (!el) return;
+    if (state === 'syncing') { el.innerHTML = '<span class="spinner"></span>'; el.classList.add('syncing'); }
+    else if (state === 'error') { el.textContent = '⚠️'; el.classList.remove('syncing'); }
+    else { el.textContent = '☁️'; el.classList.remove('syncing'); }
+  },
+
+  // ── GUARDAR / CARGAR ──
+  guardarDebounced() {
+    this.setSyncBadge('syncing');
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(async () => {
+      if (!window._uid || !window._fb) return;
+      const { db, doc, setDoc } = window._fb;
+      try {
+        await setDoc(doc(db, 'talleres', window._uid), {
+          ventas: this.ventas,
+          reparaciones: this.reparaciones,
+          gastos: this.gastos,
+          actualizado: new Date().toISOString()
+        });
+        this.setSyncBadge('ok');
+      } catch (e) {
+        this.setSyncBadge('error');
+        console.error('Error guardando:', e);
+      }
+    }, 800);
+  },
+
+  save() {
+    this.guardarDebounced();
+    return true;
+  },
+
+  // ── LOGIN ──
+  switchLoginTab(mode) {
+    this.loginMode = mode;
+    document.getElementById('tabIngresar').classList.toggle('active', mode === 'ingresar');
+    document.getElementById('tabRegistrar').classList.toggle('active', mode === 'registrar');
+    document.getElementById('confirmPasswordField').classList.toggle('hidden', mode !== 'registrar');
+    document.getElementById('btnLogin').textContent = mode === 'ingresar' ? 'Ingresar' : 'Crear cuenta';
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('loginMsg').className = 'login-msg';
+  },
+
+  async doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const confirm = document.getElementById('loginConfirm').value;
+    const msgEl = document.getElementById('loginMsg');
+    const btn = document.getElementById('btnLogin');
+    msgEl.textContent = '';
+    msgEl.className = 'login-msg';
+
+    if (!email || !password) { msgEl.textContent = 'Escribe tu correo y contrasena.'; msgEl.classList.add('error'); return; }
+    if (this.loginMode === 'registrar' && password !== confirm) { msgEl.textContent = 'Las contrasenas no coinciden.'; msgEl.classList.add('error'); return; }
+    if (password.length < 6) { msgEl.textContent = 'La contrasena debe tener al menos 6 caracteres.'; msgEl.classList.add('error'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Espera...';
+    const { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = window._fb;
+    try {
+      if (this.loginMode === 'registrar') {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Prueba a ingresar.',
+        'auth/invalid-email': 'El correo no es valido.',
+        'auth/user-not-found': 'No hay ninguna cuenta con ese correo.',
+        'auth/wrong-password': 'Contrasena incorrecta.',
+        'auth/invalid-credential': 'Correo o contrasena incorrectos.',
+        'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos.',
+        'auth/network-request-failed': 'Sin conexion a internet.',
+      };
+      msgEl.textContent = msgs[err.code] || ('Error: ' + err.message);
+      msgEl.classList.add('error');
+      btn.disabled = false;
+      btn.textContent = this.loginMode === 'registrar' ? 'Crear cuenta' : 'Ingresar';
+    }
+  },
+
+  async doResetPassword() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const msgEl = document.getElementById('loginMsg');
+    if (!email) { msgEl.textContent = 'Escribe tu correo primero.'; msgEl.classList.add('error'); return; }
+    msgEl.textContent = '';
+    try {
+      await window._fb.sendPasswordResetEmail(window._fb.auth, email);
+      msgEl.textContent = 'Te enviamos un correo para restablecer tu contrasena.';
+      msgEl.classList.add('ok');
+    } catch (e) {
+      msgEl.textContent = 'No se pudo enviar el correo: ' + e.message;
+      msgEl.classList.add('error');
+    }
+  },
+
+  contactarWhatsAppActivacion() {
+    const email = document.getElementById('pendingEmail').textContent || '';
+    const msg = 'Hola, acabo de crear mi cuenta en *Mi Taller Motos* y quiero activar mi prueba gratuita de 30 dias.\n\nMi correo: ' + email + '\n\nPodrias activarme la cuenta?';
+    window.open('https://wa.me/59173986316?text=' + encodeURIComponent(msg), '_blank');
+  },
+
+  contactarWhatsApp() {
+    const msg = 'Hola, quiero activar mi cuenta de *Mi Taller Motos*.\n\nMi correo: ' + (window._email || '') + '\n\nCuales son los pasos para pagar?';
+    window.open('https://wa.me/59173986316?text=' + encodeURIComponent(msg), '_blank');
+  },
+
+  async logout() {
+    const ok = await this.confirm('Cerrar sesion', 'Se cerrara tu sesion actual.');
+    if (!ok) return;
+    document.getElementById('pendingScreen').classList.remove('open');
+    document.getElementById('trialScreen').classList.remove('open');
+    await window._fb.signOut(window._fb.auth);
+  },
+
+  // ── HEADER / SALUDO ──
+  updateGreeting() {
+    const hour = new Date().getHours();
+    let greeting = 'Buenas noches';
+    if (hour >= 5 && hour < 12) greeting = 'Buenos dias';
+    else if (hour >= 12 && hour < 18) greeting = 'Buenas tardes';
+    const name = window._email ? window._email.split('@')[0] : '';
+    document.getElementById('greetingText').innerHTML = this.esc(greeting + (name ? ', ' + name : '') + '!') + ' <span class="wave">👋</span>';
+
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const d = new Date();
+    document.getElementById('greetingDate').textContent = `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+
+    // Avatar inicial
+    const avatar = document.getElementById('userAvatar');
+    if (window._email) avatar.textContent = window._email.charAt(0).toUpperCase();
+  },
+
+  toggleMenu() {
+    this.showToast('Menu proximamente', 'info');
+  },
+
+  showNotifications() {
+    this.showToast('Notificaciones proximamente', 'info');
+  },
+
+  // ── INIT ──
+  initApp() {
+    this.updateGreeting();
+    const t = this.todayStr();
+    document.querySelectorAll('input[type=date]').forEach(i => i.value = t);
+    this.buildPagoGrid('vPagoGrid', this.vPago, m => this.setVPago(m));
+    this.buildPagoGrid('rPagoGrid', this.rPago, m => this.setRPago(m));
+    this.resetItemsVenta();
+    this.actualizarListaMecanicos();
+    this.render();
+  },
+
+  setTab(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    else {
+      const navBtn = document.querySelector('.bottom-nav-item[data-tab="' + id + '"]');
+      if (navBtn) navBtn.classList.add('active');
+    }
+    this.activeTab = id;
+    this.render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
+  setPeriodo(v) {
+    this.periodo = v;
+    this.render();
+  },
+
+  filtrar(arr) {
+    const ahora = new Date();
+    return arr.filter(item => {
+      const f = new Date(item.fecha);
+      if (this.periodo === 'hoy') return item.fecha === this.todayStr();
+      if (this.periodo === 'semana') {
+        const startOfWeek = new Date(ahora);
+        startOfWeek.setDate(ahora.getDate() - ahora.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return f >= startOfWeek;
+      }
+      if (this.periodo === 'mes') return f.getMonth() === ahora.getMonth() && f.getFullYear() === ahora.getFullYear();
+      return true;
+    });
+  },
+
+  // ── RENDER RESUMEN (nuevo diseño) ──
+  renderResumen() {
+    const t = this.todayStr();
+    const vF = this.filtrar(this.ventas);
+    const rF = this.filtrar(this.reparaciones);
+    const gF = this.filtrar(this.gastos);
+
+    // Ingresos de hoy (todos los metodos)
+    const hoyV = this.ventas.filter(v => v.fecha === t && v.pago !== 'Credito');
+    const hoyR = this.reparaciones.filter(r => r.fecha === t && r.pago !== 'Credito');
+    const hoyCredV = this.ventas.filter(v => v.fecha === t && v.pago === 'Credito' && v.cobrado);
+    const hoyCredR = this.reparaciones.filter(r => r.fecha === t && r.pago === 'Credito' && r.cobrado);
+    const ingresosHoy = [...hoyV, ...hoyR, ...hoyCredV, ...hoyCredR].reduce((s, x) => s + this.getMonto(x), 0);
+    document.getElementById('incomeAmount').textContent = this.fmt(ingresosHoy);
+    const countHoy = hoyV.length + hoyR.length + hoyCredV.length + hoyCredR.length;
+    document.getElementById('incomeSub').textContent = countHoy + ' transaccion' + (countHoy !== 1 ? 'es' : '') + ' hoy';
+
+    // Metodos de pago (hoy)
+    const metodos = ['Efectivo', 'QR', 'Transferencia', 'Tarjeta'];
+    const metodoData = {};
+    metodos.forEach(m => {
+      const vMet = this.ventas.filter(v => v.fecha === t && v.pago === m && (m !== 'Credito' || v.cobrado));
+      const rMet = this.reparaciones.filter(r => r.fecha === t && r.pago === m && (m !== 'Credito' || r.cobrado));
+      metodoData[m] = { total: [...vMet, ...rMet].reduce((s, x) => s + this.getMonto(x), 0), count: vMet.length + rMet.length };
+    });
+    const maxMet = Math.max(...metodos.map(m => metodoData[m].total), 1);
+
+    const metodoIds = { Efectivo: 'Cash', QR: 'QR', Transferencia: 'Transfer', Tarjeta: 'Card' };
+    metodos.forEach(m => {
+      const data = metodoData[m];
+      const pct = maxMet > 0 ? (data.total / maxMet * 100) : 0;
+      const elAmt = document.getElementById('method' + metodoIds[m]);
+      const elBar = document.getElementById('bar' + metodoIds[m]);
+      const elPct = document.getElementById('pct' + metodoIds[m]);
+      const elCount = document.getElementById('count' + metodoIds[m]);
+      if (elAmt) elAmt.textContent = this.fmt(data.total);
+      if (elBar) elBar.style.width = pct + '%';
+      if (elPct) elPct.textContent = Math.round(pct) + '%';
+      if (elCount) elCount.textContent = data.count + ' op.';
+    });
+
+    // Summary cards
+    const motosEnTaller = this.reparaciones.filter(r => r.estado !== 'Entregada').length;
+    const repHoy = this.reparaciones.filter(r => r.fecha === t).length;
+    const ventasHoy = this.ventas.filter(v => v.fecha === t).length;
+    document.getElementById('sumMotos').textContent = motosEnTaller;
+    document.getElementById('sumRepHoy').textContent = repHoy;
+    document.getElementById('sumVentasHoy').textContent = ventasHoy;
+    document.getElementById('sumStock').textContent = '0';
+
+    // Creditos banner
+    const credV = this.ventas.filter(v => v.pago === 'Credito' && !v.cobrado);
+    const credR = this.reparaciones.filter(r => r.pago === 'Credito' && !r.cobrado);
+    const totalCred = [...credV, ...credR].reduce((s, x) => s + this.getMonto(x), 0);
+    const banner = document.getElementById('creditBanner');
+    if (totalCred > 0) {
+      banner.style.display = 'flex';
+      document.getElementById('creditBannerAmt').textContent = this.fmt(totalCred);
+    } else {
+      banner.style.display = 'none';
+    }
+
+    // Actividad reciente (ultimas 5 transacciones del dia)
+    const actividad = [
+      ...this.ventas.filter(v => v.fecha === t).map(v => ({ ...v, tipo: 'venta', time: v.fecha })),
+      ...this.reparaciones.filter(r => r.fecha === t).map(r => ({ ...r, tipo: 'rep', time: r.fecha }))
+    ].sort((a, b) => b.id - a.id).slice(0, 5);
+
+    const actEl = document.getElementById('activityList');
+    if (actividad.length === 0) {
+      actEl.innerHTML = '<div class="empty">No hay actividad reciente</div>';
+    } else {
+      actEl.innerHTML = '';
+      actividad.forEach(item => {
+        const isVenta = item.tipo === 'venta';
+        const iconWrap = isVenta ? 'purple' : 'green';
+        const icon = isVenta ? '🛒' : '🔧';
+        const title = isVenta ? this.descripcionVenta(item) : (item.placa ? item.placa + ' - ' + item.modelo : item.modelo);
+        const sub = isVenta ? (item.items ? item.items.length + ' productos' : 'Venta') : item.trabajo;
+        const div = document.createElement('div');
+        div.className = 'activity-item';
+        div.innerHTML = `
+          <div class="activity-icon-wrap ${iconWrap}">${icon}</div>
+          <div class="activity-info">
+            <div class="activity-title-item">${this.esc(title)}</div>
+            <div class="activity-sub">${this.esc(sub)}</div>
+          </div>
+          <div class="activity-right">
+            <div class="activity-time">Hoy</div>
+            <div class="activity-amount ${iconWrap}">+ ${this.fmt(this.getMonto(item))}</div>
+          </div>`;
+        actEl.appendChild(div);
+      });
+    }
+  },
+
+  // ── RENDER VENTAS ──
+  renderVentas() {
+    const vF = this.filtrar(this.ventas);
+    const el = document.getElementById('listaVentas');
+    if (!vF.length) {
+      el.innerHTML = '<div class="empty">No hay ventas registradas</div>';
+      document.getElementById('totalVentas').style.display = 'none';
+      return;
+    }
+    el.innerHTML = '';
+    vF.slice().reverse().forEach(v => {
+      const color = v.pago === 'Credito' && !v.cobrado ? 'var(--warning)' : 'var(--success)';
+      const items = v.items && v.items.length ? v.items : [{ producto: v.producto, cantidad: v.cantidad, unidad: v.unidad, precio: v.precio, subtotal: v.total }];
+      const card = document.createElement('div');
+      card.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:10px;overflow:hidden';
+      const itemsHtml = items.map(it => `<div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:12px;border-bottom:1px dashed var(--border)"><span style="color:var(--text-secondary)">${this.esc(it.producto)} <span style="color:var(--text-muted)">x ${it.cantidad} ${it.unidad || 'und'}</span></span><span style="color:var(--text-muted);white-space:nowrap;margin-left:10px">${this.fmt(it.subtotal != null ? it.subtotal : (it.cantidad * it.precio))}</span></div>`).join('');
+      card.innerHTML = `<div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:var(--surface-light)"><div><span class="badge" style="background:${this.PAGO_COLOR[v.pago]}22;color:${this.PAGO_COLOR[v.pago]};margin-left:0">${this.PAGO_EMOJI[v.pago]} ${v.pago}</span>${v.pago === 'Credito' && v.cobrado ? '<span style="font-size:10px;color:var(--success);margin-left:6px;font-weight:700">cobrado</span>' : ''}<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${v.fecha}${v.cliente ? ' - ' + this.esc(v.cliente) : ''} - ${items.length} producto${items.length !== 1 ? 's' : ''}</div></div><div style="display:flex;align-items:center;gap:8px"><div style="font-size:16px;font-weight:800;color:${color};white-space:nowrap">${this.fmt(v.total)}</div><button class="list-item-del" onclick="App.delVenta(${v.id})">🗑</button></div></div>${itemsHtml}`;
+      el.appendChild(card);
+    });
+    const tv = vF.filter(v => v.pago !== 'Credito' || v.cobrado).reduce((s, v) => s + Number(v.total), 0);
+    document.getElementById('totalVentasVal').textContent = this.fmt(tv);
+    const tEl = document.getElementById('totalVentas');
+    tEl.style.display = 'flex';
+    tEl.style.background = 'rgba(34,197,94,0.08)';
+    tEl.style.border = '1px solid rgba(34,197,94,0.2)';
+  },
+
+  // ── RENDER REPARACIONES ──
+  renderRep() {
+    const rF = this.filtrar(this.reparaciones);
+    document.getElementById('repSub').textContent = rF.length + ' moto' + (rF.length !== 1 ? 's' : '') + ' en el periodo';
+    const el = document.getElementById('listaRep');
+    if (!rF.length) {
+      el.innerHTML = '<div class="list-card"><div class="empty">No hay reparaciones registradas</div></div>';
+      document.getElementById('totalRep').style.display = 'none';
+      return;
+    }
+    el.innerHTML = '';
+    rF.slice().reverse().forEach(r => {
+      const amtColor = r.pago === 'Credito' && !r.cobrado ? 'var(--warning)' : 'var(--info)';
+      const ec = this.ESTADO_COLOR[r.estado || 'En taller'];
+      const fotos = r.fotos || [];
+      const fotoHtml = fotos.length > 0 ? `<div class="fotos-strip">${fotos.slice(0, 3).map((f, i) => `<img src="${f}" class="foto-thumb" onclick="App.verFoto(${r.id},${i})" alt="foto">`).join('')}${fotos.length > 3 ? `<div class="foto-thumb-count" onclick="App.verHoja(${r.id})">+${fotos.length - 3}</div>` : ''}</div>` : `<div style="width:52px;height:52px;border-radius:8px;background:var(--border);border:1px dashed var(--border-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📷</div>`;
+      const waHtml = r.whatsapp ? `<a style="font-size:10px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);color:#25D366;border-radius:8px;padding:3px 9px;cursor:pointer;font-weight:700;text-decoration:none" href="https://wa.me/${r.whatsapp.replace(/[^0-9]/g, '')}" target="_blank">💬 WA</a>` : '';
+      const d = document.createElement('div');
+      d.className = 'moto-card';
+      d.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="flex-shrink:0">${fotoHtml}</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">${r.placa ? '<span style="color:var(--primary)">' + this.esc(r.placa) + ' - </span>' : ''}${this.esc(r.modelo)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">${this.esc(r.trabajo)}</div>${r.cliente ? '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">👤 ' + this.esc(r.cliente) + '</div>' : ''}<div style="font-size:11px;margin-top:2px;cursor:pointer" onclick="App.editarMecanico(${r.id})">🔧 <span style="color:' + (r.mecanico ? 'var(--text)' : 'var(--text-muted)') + ';font-weight:' + (r.mecanico ? '600' : '400') + '">${r.mecanico ? this.esc(r.mecanico) : 'Asignar mecanico'}</span> <span style="color:var(--text-muted)">✎</span></div>${r.estadoRecepcion ? '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ' + this.esc(r.estadoRecepcion.substring(0, 50)) + (r.estadoRecepcion.length > 50 ? '...' : '') + '</div>' : ''}<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${r.fecha}</div></div><div style="display:flex;align-items:center;gap:6px;margin-left:8px;flex-shrink:0"><div style="font-size:14px;font-weight:700;color:${amtColor};white-space:nowrap">${this.fmt(r.cobro)}</div><button class="list-item-del" onclick="App.delRep(${r.id})">🗑</button></div></div><div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap"><div style="position:relative"><button class="estado-pill" style="background:${ec}25;color:${ec};border:1px solid ${ec}50" onclick="App.toggleDD(${r.id})">${r.estado || 'En taller'} ▾</button><div class="estado-dropdown" id="dd-${r.id}">${['En taller', 'En espera repuesto', 'Entregada'].map(s => `<button class="estado-opt" style="color:${this.ESTADO_COLOR[s]}" onclick="App.cambiarEstado(${r.id},'${s}')">${this.ESTADO_EMOJI[s]} ${s}</button>`).join('')}</div></div>${r.pago ? `<span class="badge" style="background:${this.PAGO_COLOR[r.pago]}22;color:${this.PAGO_COLOR[r.pago]}">${this.PAGO_EMOJI[r.pago]} ${r.pago}</span>` : ''}<button onclick="App.verHoja(${r.id})" style="font-size:10px;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.25);color:var(--primary);border-radius:8px;padding:3px 9px;cursor:pointer;font-family:inherit;font-weight:700">📋 Hoja</button>${waHtml}</div></div></div>`;
+      el.appendChild(d);
+    });
+    const tr = rF.filter(r => r.pago !== 'Credito' || r.cobrado).reduce((s, r) => s + Number(r.cobro), 0);
+    document.getElementById('totalRepVal').textContent = this.fmt(tr);
+    const tEl = document.getElementById('totalRep');
+    tEl.style.display = 'flex';
+    tEl.style.background = 'rgba(59,130,246,0.08)';
+    tEl.style.border = '1px solid rgba(59,130,246,0.2)';
+  },
+
+  // ── RENDER CREDITOS ──
+  renderCreditos() {
+    const credV = this.ventas.filter(v => v.pago === 'Credito' && !v.cobrado);
+    const credR = this.reparaciones.filter(r => r.pago === 'Credito' && !r.cobrado);
+    const el = document.getElementById('listaCreditos');
+    el.innerHTML = '';
+    if (!credV.length && !credR.length) {
+      el.innerHTML = '<div class="empty-cred"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="color:var(--success);font-weight:700;font-size:15px">Sin deudas pendientes!</div></div>';
+      return;
+    }
+    const total = [...credV, ...credR].reduce((s, x) => s + this.getMonto(x), 0);
+    const personas = new Set([...credV, ...credR].map(x => x.cliente || 'Sin nombre')).size;
+    el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:11px;color:var(--warning);font-weight:700;text-transform:uppercase;letter-spacing:1px">Total por cobrar</div><div style="font-size:22px;font-weight:800;color:var(--warning);margin-top:2px">${this.fmt(total)}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">${personas} cliente(s)</div></div><div style="font-size:32px">⚠️</div></div>`;
+    const grupos = {};
+    [...credV.map(v => ({ ...v, _t: 'venta' })), ...credR.map(r => ({ ...r, _t: 'rep' }))].forEach(item => {
+      const n = item.cliente || 'Sin nombre';
+      if (!grupos[n]) grupos[n] = [];
+      grupos[n].push(item);
+    });
+    Object.entries(grupos).forEach(([nombre, items]) => {
+      const sub = items.reduce((s, x) => s + this.getMonto(x), 0);
+      const card = document.createElement('div');
+      card.className = 'cred-persona-card';
+      card.innerHTML = `<div class="cred-persona-header"><div style="display:flex;align-items:center;gap:10px"><div class="persona-avatar">👤</div><div><div style="font-size:14px;font-weight:700;color:var(--text)">${this.esc(nombre)}</div><div style="font-size:11px;color:var(--text-muted)">${items.length} deuda${items.length !== 1 ? 's' : ''}</div></div></div><div style="font-size:16px;font-weight:800;color:var(--warning)">${this.fmt(sub)}</div></div>`;
+      items.forEach(item => {
+        const titulo = item._t === 'venta' ? this.descripcionVenta(item) : (item.placa ? item.placa + ' - ' + item.modelo : item.modelo);
+        const detalle = item._t === 'venta' ? (item.items && item.items.length ? item.items.length + ' producto' + (item.items.length !== 1 ? 's' : '') : item.cantidad + ' ' + (item.unidad || 'und')) : item.trabajo;
+        const emoji = item._t === 'venta' ? '🛒' : '🔧';
+        const div = document.createElement('div');
+        div.className = 'cred-item';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:13px;color:var(--text);font-weight:500">${emoji} ${this.esc(titulo)}</div><div style="font-size:11px;color:var(--text-muted)">${this.esc(detalle)} - ${item.fecha}</div></div><div style="font-size:14px;font-weight:700;color:var(--warning);white-space:nowrap;margin-left:10px">${this.fmt(this.getMonto(item))}</div></div><div id="cred-action-${item.id}"><button class="btn-cobrar" onclick="App.confirmCobrar(${item.id},'${item._t}')">💰 Marcar como cobrado</button></div>`;
+        card.appendChild(div);
+      });
+      el.appendChild(card);
+    });
+  },
+
+  // ── RENDER GASTOS ──
+  renderGastos() {
+    const gF = this.filtrar(this.gastos);
+    const el = document.getElementById('listaGastos');
+    el.innerHTML = '';
+    const cats = ['Proveedor', 'Salario/trabajador', 'Arriendo', 'Herramientas', 'Otro'];
+    let total = 0;
+    cats.forEach(cat => {
+      const items = gF.filter(g => g.categoria === cat);
+      if (!items.length) return;
+      const sub = items.reduce((s, g) => s + Number(g.monto), 0);
+      total += sub;
+      const label = document.createElement('div');
+      label.className = 'gasto-cat-label';
+      label.textContent = cat + ' - ' + this.fmt(sub);
+      el.appendChild(label);
+      const card = document.createElement('div');
+      card.className = 'list-card';
+      items.slice().reverse().forEach(g => {
+        const d = document.createElement('div');
+        d.className = 'list-item';
+        d.innerHTML = `<div class="list-item-info"><div class="list-item-title">${this.esc(g.descripcion)}</div><div class="list-item-sub">${g.fecha}</div></div><div class="list-item-val" style="color:var(--danger)">${this.fmt(g.monto)}</div><button class="list-item-del" onclick="App.delGasto(${g.id})">🗑</button>`;
+        card.appendChild(d);
+      });
+      el.appendChild(card);
+    });
+    if (!gF.length) el.innerHTML = '<div class="list-card"><div class="empty">No hay gastos registrados</div></div>';
+    const tEl = document.getElementById('totalGastos');
+    if (gF.length) {
+      document.getElementById('totalGastosVal').textContent = this.fmt(total);
+      tEl.style.display = 'flex';
+      tEl.style.background = 'rgba(239,68,68,0.08)';
+      tEl.style.border = '1px solid rgba(239,68,68,0.2)';
+    } else {
+      tEl.style.display = 'none';
+    }
+  },
+
+  render() {
+    this.renderResumen();
+    if (this.activeTab === 'ventas') this.renderVentas();
+    if (this.activeTab === 'reparaciones') this.renderRep();
+    if (this.activeTab === 'creditos') this.renderCreditos();
+    if (this.activeTab === 'gastos') this.renderGastos();
+    this.renderCredBadge();
+  },
+
+  renderCredBadge() {
+    const nc = this.ventas.filter(v => v.pago === 'Credito' && !v.cobrado).length + this.reparaciones.filter(r => r.pago === 'Credito' && !r.cobrado).length;
+    const badge = document.getElementById('notifCount');
+    if (nc > 0) { badge.textContent = nc; badge.style.display = 'flex'; }
+    else { badge.style.display = 'none'; }
+  },
+
+  // ── ACCIONES ──
+  toggleDD(id) {
+    document.querySelectorAll('.estado-dropdown').forEach(d => { if (d.id !== 'dd-' + id) d.classList.remove('open'); });
+    document.getElementById('dd-' + id).classList.toggle('open');
+  },
+
+  cambiarEstado(id, estado) {
+    this.reparaciones = this.reparaciones.map(r => r.id === id ? { ...r, estado } : r);
+    this.save();
+    document.querySelectorAll('.estado-dropdown').forEach(d => d.classList.remove('open'));
+    this.renderRep();
+    this.showToast('Estado actualizado', 'success');
+  },
+
+  editarMecanico(id) {
+    const r = this.reparaciones.find(x => x.id === id);
+    if (!r) return;
+    const nuevo = prompt('Quien esta trabajando esta moto?', r.mecanico || '');
+    if (nuevo === null) return;
+    this.reparaciones = this.reparaciones.map(x => x.id === id ? { ...x, mecanico: nuevo.trim() } : x);
+    this.save();
+    this.actualizarListaMecanicos();
+    this.renderRep();
+  },
+
+  actualizarListaMecanicos() {
+    const nombres = new Set();
+    this.reparaciones.forEach(r => { if (r.mecanico && r.mecanico.trim()) nombres.add(r.mecanico.trim()); });
+    const dl = document.getElementById('listaMecanicos');
+    if (dl) dl.innerHTML = [...nombres].sort().map(n => `<option value="${this.esc(n)}">`).join('');
+  },
+
+  async confirmCobrar(id, tipo) {
+    const ok = await this.confirm('Marcar como cobrado', 'Esta accion registra el cobro del credito.');
+    if (!ok) return;
+    this.cobrar(id, tipo);
+  },
+
+  cobrar(id, tipo) {
+    if (tipo === 'venta') {
+      this.ventas = this.ventas.map(v => v.id === id ? { ...v, cobrado: true, fechaCobro: this.todayStr() } : v);
+    } else {
+      this.reparaciones = this.reparaciones.map(r => r.id === id ? { ...r, cobrado: true, fechaCobro: this.todayStr() } : r);
+    }
+    this.save();
+    this.render();
+    this.showToast('Cobro registrado', 'success');
+  },
+
+  async delVenta(id) {
+    const ok = await this.confirm('Eliminar venta', 'Esta accion no se puede deshacer.');
+    if (!ok) return;
+    this.ventas = this.ventas.filter(v => v.id !== id);
+    this.save();
+    this.render();
+    this.showToast('Venta eliminada', 'success');
+  },
+
+  async delRep(id) {
+    const ok = await this.confirm('Eliminar reparacion', 'Esta accion no se puede deshacer.');
+    if (!ok) return;
+    this.reparaciones = this.reparaciones.filter(r => r.id !== id);
+    this.save();
+    this.render();
+    this.showToast('Reparacion eliminada', 'success');
+  },
+
+  async delGasto(id) {
+    const ok = await this.confirm('Eliminar gasto', 'Esta accion no se puede deshacer.');
+    if (!ok) return;
+    this.gastos = this.gastos.filter(g => g.id !== id);
+    this.save();
+    this.render();
+    this.showToast('Gasto eliminado', 'success');
+  },
+
+  openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  },
+
+  closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  },
+
+  // ── FOTOS ──
+  comprimirImagen(file, maxW = 1000, calidad = 0.6) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', calidad));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+
+  async handleFotos(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    const espacioDisp = 4 - this.fotosActuales.length;
+    if (espacioDisp <= 0) { this.showToast('Maximo 4 fotos permitidas', 'warning'); input.value = ''; return; }
+    const aProcesar = files.slice(0, espacioDisp);
+    document.getElementById('fotoProgress').style.display = 'block';
+    for (const file of aProcesar) {
+      try { const comprimida = await this.comprimirImagen(file); this.fotosActuales.push(comprimida); this.renderFotosGrid(); }
+      catch (err) { console.error(err); }
+    }
+    document.getElementById('fotoProgress').style.display = 'none';
+    input.value = '';
+  },
+
+  renderFotosGrid() {
+    const grid = document.getElementById('fotosGrid');
+    const addArea = document.getElementById('fotoAddArea');
+    const limitMsg = document.getElementById('fotoLimitMsg');
+    if (this.fotosActuales.length > 0) {
+      grid.style.display = 'grid';
+      grid.innerHTML = this.fotosActuales.map((f, i) => `<div class="foto-grid-item"><img src="${f}" class="foto-grid-img" onclick="App.lightboxShow(${i})" alt="Foto ${i + 1}"><button class="foto-grid-del" onclick="App.quitarFoto(${i})">✕</button></div>`).join('');
+    } else { grid.style.display = 'none'; }
+    if (this.fotosActuales.length >= 4) { addArea.style.display = 'none'; limitMsg.textContent = 'Maximo de 4 fotos alcanzado'; }
+    else { addArea.style.display = 'grid'; limitMsg.textContent = this.fotosActuales.length + ' / 4 fotos'; }
+  },
+
+  quitarFoto(i) {
+    this.fotosActuales.splice(i, 1);
+    this.renderFotosGrid();
+  },
+
+  lightboxShow(i) {
+    document.getElementById('lightboxImg').src = this.fotosActuales[i];
+    document.getElementById('lightbox').classList.add('open');
+  },
+
+  verFoto(repId, idx) {
+    const r = this.reparaciones.find(x => x.id == repId);
+    if (!r || !r.fotos || !r.fotos[idx]) return;
+    document.getElementById('lightboxImg').src = r.fotos[idx];
+    document.getElementById('lightbox').classList.add('open');
+  },
+
+  // ── PAGO GRID ──
+  buildPagoGrid(containerId, current, onchange) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    this.METODOS.forEach(m => {
+      const btn = document.createElement('button');
+      const sel = current === m;
+      btn.className = 'pago-btn' + (sel ? ' selected' : '');
+      btn.style.borderColor = sel ? this.PAGO_COLOR[m] : 'var(--border)';
+      btn.style.color = sel ? this.PAGO_COLOR[m] : 'var(--text-muted)';
+      btn.style.background = sel ? this.PAGO_COLOR[m] + '18' : 'var(--bg)';
+      btn.innerHTML = this.PAGO_EMOJI[m] + ' ' + m;
+      btn.onclick = () => onchange(m);
+      el.appendChild(btn);
+    });
+  },
+
+  setVPago(m) {
+    this.vPago = m;
+    this.buildPagoGrid('vPagoGrid', this.vPago, m => this.setVPago(m));
+    document.getElementById('vClienteField').classList.toggle('hidden', m !== 'Credito');
+  },
+
+  setRPago(m) {
+    this.rPago = m;
+    this.buildPagoGrid('rPagoGrid', this.rPago, m => this.setRPago(m));
+    document.getElementById('rCreditWarn').style.display = m === 'Credito' ? 'block' : 'none';
+  },
+
+  // ── ITEMS VENTA ──
+  nuevoItemVacio() {
+    return { id: this.itemIdSeq++, producto: '', cantidad: 1, unidad: 'und', precio: '' };
+  },
+
+  agregarItemVenta() {
+    this.itemsVenta.push(this.nuevoItemVacio());
+    this.renderItemsVenta();
+  },
+
+  quitarItemVenta(id) {
+    if (this.itemsVenta.length <= 1) return;
+    this.itemsVenta = this.itemsVenta.filter(it => it.id !== id);
+    this.renderItemsVenta();
+  },
+
+  actualizarItemVenta(id, campo, valor) {
+    const item = this.itemsVenta.find(it => it.id === id);
+    if (item) item[campo] = valor;
+    this.actualizarTotalVenta();
+  },
+
+  renderItemsVenta() {
+    const cont = document.getElementById('itemsVentaList');
+    cont.innerHTML = this.itemsVenta.map(item => {
+      const subtotal = Number(item.cantidad || 0) * Number(item.precio || 0);
+      return `<div class="item-venta-row">${this.itemsVenta.length > 1 ? `<button class="item-del" onclick="App.quitarItemVenta(${item.id})">✕</button>` : ''}<div class="item-venta-grid"><input placeholder="Producto: aceite, filtro..." value="${this.esc(item.producto)}" oninput="App.actualizarItemVenta(${item.id},'producto',this.value)"><select onchange="App.actualizarItemVenta(${item.id},'unidad',this.value)">${['und', 'litro', 'par', 'kit', 'servicio'].map(u => `<option ${item.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></div><div class="item-venta-grid2"><input type="number" placeholder="Cantidad" value="${item.cantidad}" min="0" step="any" oninput="App.actualizarItemVenta(${item.id},'cantidad',this.value)"><input type="number" placeholder="Precio unit. (Bs.)" value="${item.precio}" min="0" step="any" oninput="App.actualizarItemVenta(${item.id},'precio',this.value)"></div><div class="item-venta-subtotal">Subtotal: <b>${this.fmt(subtotal)}</b></div></div>`;
+    }).join('');
+    this.actualizarTotalVenta();
+  },
+
+  actualizarTotalVenta() {
+    const total = this.itemsVenta.reduce((s, it) => s + (Number(it.cantidad || 0) * Number(it.precio || 0)), 0);
+    document.getElementById('vTotalPreview').textContent = this.fmt(total);
+  },
+
+  resetItemsVenta() {
+    this.itemsVenta = [this.nuevoItemVacio()];
+    this.renderItemsVenta();
+  },
+
+  // ── SAVE ACTIONS ──
+  saveVenta() {
+    const itemsValidos = this.itemsVenta.filter(it => it.producto.trim() && Number(it.precio) > 0);
+    if (!itemsValidos.length) { this.showToast('Anade al menos un producto con nombre y precio', 'warning'); return; }
+    const items = itemsValidos.map(it => ({
+      producto: it.producto.trim(), cantidad: Number(it.cantidad || 1), unidad: it.unidad,
+      precio: Number(it.precio), subtotal: Number(it.cantidad || 1) * Number(it.precio)
+    }));
+    const total = items.reduce((s, it) => s + it.subtotal, 0);
+    this.ventas.push({
+      id: Date.now(), items, total, pago: this.vPago,
+      cliente: document.getElementById('vCliente').value.trim(),
+      fecha: document.getElementById('vFecha').value || this.todayStr()
+    });
+    this.save();
+    this.closeModal('modalVenta');
+    this.resetItemsVenta();
+    document.getElementById('vCliente').value = '';
+    this.render();
+    this.showToast('Venta guardada', 'success');
+  },
+
+  saveRep() {
+    const modelo = document.getElementById('rModelo').value.trim();
+    const cobro = document.getElementById('rCobro').value;
+    if (!modelo || !cobro) { this.showToast('Completa modelo y cobro', 'warning'); return; }
+    this.reparaciones.push({
+      id: Date.now(),
+      placa: document.getElementById('rPlaca').value.trim(),
+      modelo, trabajo: document.getElementById('rTrabajo').value.trim(),
+      mecanico: document.getElementById('rMecanico').value.trim(),
+      cliente: document.getElementById('rCliente').value.trim(),
+      whatsapp: document.getElementById('rWhatsapp').value.trim(),
+      estadoRecepcion: document.getElementById('rEstadoRecep').value.trim(),
+      fotos: [...this.fotosActuales],
+      cobro: Number(cobro), pago: this.rPago,
+      estado: document.getElementById('rEstado').value,
+      fecha: document.getElementById('rFecha').value || this.todayStr()
+    });
+    this.save();
+    this.closeModal('modalRep');
+    this.fotosActuales = [];
+    this.renderFotosGrid();
+    ['rModelo', 'rPlaca', 'rTrabajo', 'rMecanico', 'rCliente', 'rWhatsapp', 'rEstadoRecep', 'rCobro'].forEach(id => document.getElementById(id).value = '');
+    this.actualizarListaMecanicos();
+    this.render();
+    this.showToast('Reparacion guardada', 'success');
+  },
+
+  saveGasto() {
+    const desc = document.getElementById('gDesc').value.trim();
+    const monto = document.getElementById('gMonto').value;
+    if (!desc || !monto) { this.showToast('Completa descripcion y monto', 'warning'); return; }
+    this.gastos.push({
+      id: Date.now(), descripcion: desc,
+      categoria: document.getElementById('gCat').value,
+      monto: Number(monto),
+      fecha: document.getElementById('gFecha').value || this.todayStr()
+    });
+    this.save();
+    this.closeModal('modalGasto');
+    this.render();
+    document.getElementById('gDesc').value = '';
+    document.getElementById('gMonto').value = '';
+    this.showToast('Gasto registrado', 'success');
+  },
+
+  // ── HOJA / PDF ──
+  verHoja(repId) {
+    const r = this.reparaciones.find(x => x.id == repId);
+    if (!r) return;
+    this.hojaActual = r;
+    document.getElementById('hojaSub').textContent = 'Mi Taller Motos - ' + r.fecha;
+    const fotos = r.fotos || [];
+    let html = '';
+    html += `<div class="hoja-section"><div class="hoja-section-title">🏍 Datos de la moto</div>`;
+    if (r.placa) html += `<div class="hoja-row"><span class="hoja-key">Placa</span><span class="hoja-val">${this.esc(r.placa)}</span></div>`;
+    html += `<div class="hoja-row"><span class="hoja-key">Modelo</span><span class="hoja-val">${this.esc(r.modelo)}</span></div>`;
+    if (r.trabajo) html += `<div class="hoja-row"><span class="hoja-key">Trabajo solicitado</span><span class="hoja-val">${this.esc(r.trabajo)}</span></div>`;
+    if (r.mecanico) html += `<div class="hoja-row"><span class="hoja-key">Mecanico</span><span class="hoja-val">${this.esc(r.mecanico)}</span></div>`;
+    html += `<div class="hoja-row"><span class="hoja-key">Fecha ingreso</span><span class="hoja-val">${r.fecha}</span></div></div>`;
+    if (r.cliente || r.whatsapp) {
+      html += `<div class="hoja-section"><div class="hoja-section-title">👤 Cliente</div>`;
+      if (r.cliente) html += `<div class="hoja-row"><span class="hoja-key">Nombre</span><span class="hoja-val">${this.esc(r.cliente)}</span></div>`;
+      if (r.whatsapp) html += `<div class="hoja-row"><span class="hoja-key">WhatsApp</span><span class="hoja-val">${this.esc(r.whatsapp)}</span></div>`;
+      html += `</div>`;
+    }
+    if (r.estadoRecepcion) {
+      html += `<div class="hoja-section"><div class="hoja-section-title">📝 Estado al recibir</div><div class="hoja-estado-recep">${this.esc(r.estadoRecepcion)}</div></div>`;
+    }
+    if (fotos.length > 0) {
+      html += `<div class="hoja-section"><div class="hoja-section-title">📷 Fotos de recepcion (${fotos.length})</div><div class="hoja-fotos-grid">${fotos.map((f, i) => `<img src="${f}" class="hoja-foto-img" onclick="document.getElementById('lightboxImg').src='${f}';document.getElementById('lightbox').classList.add('open')" alt="Foto ${i + 1}">`).join('')}</div></div>`;
+    }
+    html += `<div class="hoja-section"><div class="hoja-section-title">💰 Cobro</div><div class="hoja-row"><span class="hoja-key">Monto</span><span class="hoja-val" style="color:var(--primary);font-size:16px;font-weight:800">${this.fmt(r.cobro)}</span></div><div class="hoja-row"><span class="hoja-key">Metodo de pago</span><span class="hoja-val">${this.PAGO_EMOJI[r.pago] || ''} ${r.pago || '-'}</span></div><div class="hoja-row"><span class="hoja-key">Estado</span><span class="hoja-val">${this.ESTADO_EMOJI[r.estado] || ''} ${r.estado || 'En taller'}</span></div></div>`;
+    document.getElementById('hojaBody').innerHTML = html;
+    document.getElementById('waPdfBtn').disabled = false;
+    document.getElementById('generatingBar').style.display = 'none';
+    document.getElementById('hojaModal').classList.add('open');
+  },
+
+  closeHoja() {
+    document.getElementById('hojaModal').classList.remove('open');
+  },
+
+  async generarYEnviarPDF() {
+    if (!this.hojaActual) return;
+    const r = this.hojaActual;
+    const btn = document.getElementById('waPdfBtn');
+    const bar = document.getElementById('generatingBar');
+    btn.disabled = true;
+    bar.style.display = 'block';
+    btn.innerHTML = '<span class="spinner"></span> Generando PDF...';
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = 210, margin = 15;
+      let y = margin;
+      doc.setFillColor(249, 115, 22);
+      doc.rect(0, 0, W, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HOJA DE RECEPCION - MI TALLER MOTOS', W / 2, 14, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Fecha: ' + r.fecha, W / 2, 22, { align: 'center' });
+      y = 38;
+      const campo = (label, valor) => {
+        if (!valor) return;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 100, 100);
+        doc.text(label.toUpperCase(), margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 30, 30);
+        doc.setFontSize(11);
+        const lines = doc.splitTextToSize(String(valor), W - margin * 2 - 30);
+        doc.text(lines, margin + 50, y);
+        y += Math.max(7, lines.length * 5);
+      };
+      const seccion = (titulo) => {
+        y += 3;
+        doc.setFillColor(249, 115, 22);
+        doc.rect(margin, y, W - margin * 2, 6, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(titulo, margin + 2, y + 4.2);
+        doc.setTextColor(30, 30, 30);
+        y += 9;
+      };
+      seccion('DATOS DE LA MOTO');
+      if (r.placa) campo('Placa', r.placa);
+      campo('Modelo', r.modelo);
+      if (r.trabajo) campo('Trabajo', r.trabajo);
+      if (r.mecanico) campo('Mecanico', r.mecanico);
+      campo('Estado', r.estado || 'En taller');
+      y += 2;
+      if (r.cliente || r.whatsapp) {
+        seccion('DATOS DEL CLIENTE');
+        if (r.cliente) campo('Nombre', r.cliente);
+        if (r.whatsapp) campo('WhatsApp', r.whatsapp);
+        y += 2;
+      }
+      seccion('COBRO');
+      campo('Monto', this.fmt(r.cobro));
+      if (r.pago) campo('Pago', r.pago);
+      y += 2;
+      if (r.estadoRecepcion) {
+        seccion('ESTADO AL RECIBIR');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        const lines = doc.splitTextToSize(r.estadoRecepcion, W - margin * 2);
+        doc.text(lines, margin, y);
+        y += lines.length * 5 + 4;
+      }
+      const fotos = r.fotos || [];
+      if (fotos.length > 0) {
+        if (y > 200) doc.addPage();
+        else y += 4;
+        seccion('FOTOS DE RECEPCION (' + fotos.length + ')');
+        const fotoW = 80, fotoH = 60, gap = 10;
+        let fx = margin, fy = y;
+        for (let i = 0; i < fotos.length; i++) {
+          try {
+            const imgData = fotos[i];
+            const fmt2 = imgData.includes('image/png') ? 'PNG' : 'JPEG';
+            if (fy + fotoH > 280) { doc.addPage(); fy = margin; fx = margin; }
+            doc.addImage(imgData, fmt2, fx, fy, fotoW, fotoH);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text('Foto ' + (i + 1), fx + fotoW / 2, fy + fotoH + 4, { align: 'center' });
+            fx += fotoW + gap;
+            if (fx + fotoW > W - margin) { fx = margin; fy += fotoH + 10; }
+          } catch (e) { console.warn(e); }
+        }
+        y = fy + fotoH + 14;
+      }
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFillColor(240, 240, 240);
+        doc.rect(0, 287, W, 10, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(120, 120, 120);
+        doc.text('Mi Taller Motos | ' + r.fecha + ' | Pagina ' + i + ' de ' + pageCount, W / 2, 293, { align: 'center' });
+      }
+      const pdfBlob = doc.output('blob');
+      const nombreArchivo = 'Recepcion_' + (r.placa || r.modelo).replace(/\s+/g, '_') + '_' + r.fecha + '.pdf';
+      const pdfFile = new File([pdfBlob], nombreArchivo, { type: 'application/pdf' });
+      const mensajeWA = 'Hola ' + (r.cliente || '') + ', le enviamos la hoja de recepcion de su moto ' + (r.placa ? r.placa + ' ' : '') + r.modelo + ' ingresada el ' + r.fecha + '.\n\nMonto: ' + this.fmt(r.cobro) + '\nPago: ' + r.pago;
+      let compartidoDirecto = false;
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        try {
+          await navigator.share({ files: [pdfFile], title: 'Hoja de recepcion', text: mensajeWA });
+          compartidoDirecto = true;
+        } catch (shareErr) {
+          if (shareErr.name === 'AbortError') {
+            btn.disabled = false;
+            btn.innerHTML = '<span style="font-size:18px">💬</span> Enviar PDF por WhatsApp';
+            bar.style.display = 'none';
+            return;
+          }
+        }
+      }
+      if (!compartidoDirecto) {
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = pdfUrl;
+        a.download = nombreArchivo;
+        a.click();
+        const wa = r.whatsapp ? r.whatsapp.replace(/[^0-9]/g, '') : '';
+        const overlay = document.createElement('div');
+        overlay.className = 'hoja-overlay open';
+        overlay.style.zIndex = 400;
+        overlay.innerHTML = `<div class="hoja-box" style="max-width:380px"><div class="hoja-header-bar" style="background:linear-gradient(135deg,#25D366,#1da851)"><div><div style="font-size:16px;font-weight:800;color:#fff">📄 PDF descargado</div><div style="font-size:11px;color:#fff9;margin-top:2px">Falta un paso para enviarlo</div></div><button class="hoja-close" onclick="this.closest('.hoja-overlay').remove()">✕</button></div><div class="hoja-body"><div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px">El archivo <b style="color:var(--text)">${this.esc(nombreArchivo)}</b> ya se descargo. Para enviarlo por WhatsApp:</div><div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><div style="background:var(--primary);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Abre WhatsApp y entra al chat del cliente</div></div><div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><div style="background:var(--primary);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text)">Toca el clip 📎 → Documento → busca el PDF en Descargas</div></div></div><div class="hoja-footer"><button class="wa-pdf-btn" id="btnWaInst">💬 Abrir WhatsApp</button></div></div>`;
+        document.body.appendChild(overlay);
+        document.getElementById('btnWaInst').addEventListener('click', () => {
+          const url = wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent(mensajeWA) : 'https://wa.me/?text=' + encodeURIComponent(mensajeWA);
+          window.open(url, '_blank');
+          overlay.remove();
+        });
+      }
+    } catch (err) {
+      this.showToast('Error generando PDF: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span style="font-size:18px">💬</span> Enviar PDF por WhatsApp';
+      bar.style.display = 'none';
+    }
+  },
+
+  enviarWATexto() {
+    if (!this.hojaActual) return;
+    const r = this.hojaActual;
+    const wa = r.whatsapp ? r.whatsapp.replace(/[^0-9]/g, '') : '';
+    const msg = ['🔧 *HOJA DE RECEPCION — Mi Taller Motos*', '', '🏍 *Moto:* ' + (r.placa ? r.placa + ' · ' : '') + r.modelo, '📅 *Fecha ingreso:* ' + r.fecha, r.trabajo ? '🛠 *Trabajo:* ' + r.trabajo : '', r.estadoRecepcion ? '\n📝 *Estado al recibir:*\n' + r.estadoRecepcion : '', '\n💰 *Cobro:* ' + this.fmt(r.cobro), r.pago ? this.PAGO_EMOJI[r.pago] + ' *Pago:* ' + r.pago : '', '\n✅ Le avisaremos cuando su moto este lista.', '_Mi Taller Motos_'].filter(Boolean).join('\n');
+    const url = wa ? 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+  }
+};
+
+// ── EVENT LISTENERS ──
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('estado-pill')) {
+    document.querySelectorAll('.estado-dropdown').forEach(d => d.classList.remove('open'));
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open, .hoja-overlay.open').forEach(el => el.classList.remove('open'));
+    document.body.style.overflow = '';
+  }
+  if (e.key === 'Enter') {
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen && !loginScreen.classList.contains('hidden')) {
+      App.doLogin();
+    }
+  }
+});
+</script>
+</body>
+</html>
